@@ -1,13 +1,13 @@
 # Comunication Client-Server
 Structure with a readable and clean code for comunications between Client (js) and Server (php).
 
-Este repositorio comprende una estructura para realizar la comunicación entre cliente y servidor de una forma estructurada, limpia y legible.
+This repository comprises a structure to carry out communication between client and server in a structured, clean and readable way.
 
-Para ello, dividiremos la comunicación en 3 zonas.
+To do this, we will divide the communication into 3 zones.
 
-1. La primera zona corresponde con la parte del cliente, donde utilizaremos javascript y el repositorio mAjax.js.
-2. La segunda zona será un Switch en el lado del servidor, que se encargará de escuchar las peticicones del cliente y rediriguirla al método adecuado.
-3. La tercera zona corresponde al método que debe ejecutarse en el servidor. Dentro de este, se realizarán operaciones utilizando clases, pdo, etc...
+1. The first area corresponds to the client part, where we will use javascript and the mAjax.js repository.
+2. The second zone will be a Switch on the server side, which will be in charge of listening to the client's requests and redirecting it to the appropriate method.
+3. The third zone corresponds to the method to be executed on the server. Within this, operations will be performed using classes, pdo, etc ...
 
 
 ## Install
@@ -43,179 +43,165 @@ For more information, see SqlConnector repository: https://github.com/jamani18/S
 
 ## Usage
 
-En este pequeño ejemplo, daremos de alta a un usuario. Consultando previamente con la base de datos si ya existe.
+In this small example, we will register a user. Checking previously with the database if it already exists.
 
 ### Client zone.
 
-Utilizaremos mAjax.js para realizar establecer la comunicación con el servidor
+We will use mAjax.js to establish communication with the server.
 
-**0. Nomenclature**
+````js
 
-By convention, the file name must be the class name + PDO.
+//Send user data to server
 
-For example:
-
-_For class Vehicle, we call the file: VehiclePDO.php_
-
-It is recommended to include these files in a directory called 'pdo'.
-
-
-**1. Nest the class**
-
-We must include in the file the class with which it will work together with SqlConnector.php.
-
-```php
-
-require_once realpath('conf/SqlConnector.php');
-spl_autoload_register(function(){
-  require_once realpath('class/Vehicle.php');
-});
+var user = document.getElementById("username").value;
+var password = document.getElementById("password").value;
+sendAjaxPost: function (true,newUser,{username:user,password:password}, function(response){
+  if(response == 'exist'){
+    alert("Error sing up user. The user alredy existed on database");
+  }
+   if(response == 'error'){
+    alert("Wrong data");
+  }
+  if(response == 'true'){
+    alert("User has been created correctly");
+  }
+}),function(){
+  alert("Connection failed");
+},5000); 
 
 ````
 
-**2. Store table fields**
+### Server zone.
 
-To create the sentences more comfortably, we store the name of the table fields in a global variable
+**Switch and Methods**
+
+We create the file Switch.php, which will contain a switch that will listen for the 'action' parameter that will come in the client's request. According to the value of 'action' we will execute one method or another.
+
+The 'data' parameter will contain the data. They will always come in JSON so we decode them before passing it as a parameter to the searched method.
 
 
-```php
+````php
 
-define('ATTR_VEHICLEPDO',"id,name,idType");
+$data = json_decode($_POST['data'],true);
 
+switch($_REQUEST['action']){
+    //exampleAjax.
+    case "newClient": newClient($data);break;
+  }
 ````
 
-**3. Create handler to pass from array to class instance**
+For greater organization, the methods that are called will be saved in other files. It is advisable to group the methods according to the scope of actions they perform.
 
-We create a method that will be passed a row in the database as a parameter and that will return an instance of the class we are working with.
+In this example, since the method performs actions on users, we create a file called userAjax.php. Here we will save the methods called through ajax that are related to user management.
 
-```php
+We must include in the file the PDOs that will be used by means of an include.
 
-function convertRowToVehicleClass($r){
-    return new Vehicle($r['id'],$r['name'],$r['idType']);
-}
+````php
+//File userAjax.
 
+  require_once('pdo/UserPDO.php');
+
+  //Create the a new user if not exist.
+  function newUser($data){
+    //Operations
+  }
+  
 ````
 
-**4. Establish communications with the database**
+We must include the userAjax.php file in the Switch.php file so that it can access its methods.
 
-Using the SqlConnector.php file, we perform the CRUD with the database.
-
-Here are some examples of the code.
-
-```php
-
-//VehiclePDO.php
-
-function readVehicleById($id){
-    $return = selectSimple("SELECT ".ATTR_VEHICLEPDO." FROM vehicle WHERE id='$id'",'convertRowToVehicleClass');
-    return $return;
-}
-
-function createVehicle($vehicle,$idPanel){
-    
-    $pass = false;
-    execSql("INSERT INTO vehicle VALUES('','".$vehicle->getNamr()."','".$vehicle->getIdType()."')");
-    $pass = true;
-    return $pass;
-}
-
-function updateVehicle($vehicle){
-
-    execSql("UPDATE vehicle SET name='".$vehicle->getName()."' WHERE id='".$vehicle->getId()."'");
-    $pass = true;
-    return $pass;
-}
-
-function removeVehicle($idVehicle){
-    
-    $pass = false;
-    execSql("DELETE FROM vehicle WHERE id='$idVehicle'")
-    $pass = true; 
-    return $pass;
-}
-
-
+````php
+require realpath('ajax/userAjax.php');
 ````
 
-### Class structure
+**User Class and PDO**
 
-Next, the steps to form the class with the attributes are established. Taking care of the peculiar case that the class houses other instances of classes as attributes.
+For the example, we will create a user if it does not exist. For this we must create the structure of the class and PDO.
 
-To start, we create the primitive type attributes as they are normally done and then we create the constructor.
+_For more information, see the repository reference: https://github.com/jamani18/PHP_PDO
 
-```php
+````php
+//User.php
 
-class Vehicle {
+class User {
     
     protected $id;
-    protected $name;
-    protected $idType;
+    protected $username;
+    protected $password;
     
-    function __construct($id, $name,$idType) {
+
+    function __construct($id, $username,$password) {
         $this->id = $id;
-        $this->name = $name;
-        $this->idType = $idType;
+        $this->username = $username;
+        $this->password = $password;
     }
     
+
     function getId() {
         return $this->id;
     }
+    ....
+    
+````
 
-    function getName() {
-        return $this->name;
+````php
+//UserPDO.php
+
+...
+
+define('ATTR_USERPDO',"id,username,password");
+function convertRowToUserClass($r){
+    return new User($r['id'],$r['username'],$r['password']);
+}
+
+function readUserByUsername($username){
+
+    $sql = "SELECT ".ATTR_USERPDO." FROM user WHERE username='$username'";
+    $return = selectSimple($sql,'convertRowToUserClass');
+    
+    return $return;  
+}
+
+
+function createUser($user,$idPanel){
+    
+    $pass = false;
+     
+    execSql("INSERT INTO user VALUES('','".$user->getUsername()."','".$user->getPassword()."')");
+    
+    $pass = true;
+
+    return $pass;
+}
+    ....
+    
+````
+
+**Ajax Method**
+
+We create the content of the method. In this example, it will search if the user exists, if it does not exist it will create it.
+
+````php
+
+//Create the a new user if not exist.
+  function newUser($data){
+  
+    $return = 'error';
+    
+    //check if exist neededs parameters
+    if(isset($data['username']) && isset($data['password']){
+        $return = 'exist';
+        $existUser = readUserByUsername($data['username']);
+        if(!$existUser){
+          createUser(new User('',$data['username'],$data['password']);
+          $return = 'true';
+        }
     }
     
-    ........
-
-
-````
-
-We pay attention to the structure to set attributes of class instances. In this case we do it with $ type.
-
-To do this, we start by declaring the attribute that stores the ID of the foreign key ($ idType) and an attribute where the instance will be stored with a default NULL value ($ type).
-
-In this example we use the Vehicle.php file that will have a VehicleType inside.
-
-```php
-
-//Vehicle.php
-protected $idType; //foraign key
-protected $type = NULL; //object
-
-function __construct($id, $name,$idType) {} //just pass foraign key on construct.
+    echo $return;
+    
+  }
 
 ````
 
-The getters and setters for both $idType and $type will have the following structure:
-
-```php
-
-//Vehicle.php
-
-//get $idType
-function getIdType() {
-    return $this->idType;
-}
-
-//set an $idType and reset $type saved.
-function setIdType($idType) {
-    $this->idType = $idType;
-    $this->type = NULL;
-}
-
-//get the type of vehicle. If is the first time, we search on database, else we get from attribute.
-function getType() {
-    $this->type === NULL ? $this->type = readVehicleTypeById($this->idType) : false;
-    return $this->type;
-}
-
-//set an a type of vehicle object. Update the $idType value.
-function setType($type) {
-    $this->type = $type ? $type : NULL;
-    $this->idType = $type ? $type->getId() : false;
-}
-
-````
-
-With this structure we manage to obtain the object from the database the first time, and once obtained, it will only query it in the same class.
-
+In this way, we will have the basic scheme to carry out communications between the client and the server in a structured way.
