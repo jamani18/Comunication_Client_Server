@@ -85,7 +85,7 @@ The 'data' parameter will contain the data. They will always come in JSON so we 
 $data = json_decode($_POST['data'],true);
 
 switch($_REQUEST['action']){
-    //exampleAjax.
+    //userAjax.
     case "newClient": newClient($data);break;
   }
 ````
