@@ -81,7 +81,8 @@ The 'data' parameter will contain the data. They will always come in JSON so we 
 
 
 ````php
-
+require realpath('ajax/clientsAjax.php');
+    
 $data = json_decode($_POST['data'],true);
 
 switch($_REQUEST['action']){
