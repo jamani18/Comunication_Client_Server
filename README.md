@@ -164,7 +164,7 @@ function readUserByUsername($username){
 }
 
 
-function createUser($user,$idPanel){
+function createUser($user){
     
     $pass = false;
      
